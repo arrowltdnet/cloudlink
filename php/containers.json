@@ -1,0 +1,351 @@
+{
+  "production": [
+    {
+      "dependsOn": [
+        "nextcloud-aio-onlyoffice",
+        "nextcloud-aio-collabora",
+        "nextcloud-aio-clamav",
+        "nextcloud-aio-talk",
+        "nextcloud-aio-nextcloud"
+      ],
+      "identifier": "nextcloud-aio-apache",
+      "displayName": "Apache",
+      "containerName": "nextcloud/aio-apache",
+      "ports": [
+        "%APACHE_PORT%/tcp"
+      ],
+      "internalPorts": [
+        "%APACHE_PORT%"
+      ],
+      "secrets": [],
+      "environmentVariables": [
+        "NC_DOMAIN=%NC_DOMAIN%",
+        "NEXTCLOUD_HOST=nextcloud-aio-nextcloud",
+        "COLLABORA_HOST=nextcloud-aio-collabora",
+        "TALK_HOST=nextcloud-aio-talk",
+        "APACHE_PORT=%APACHE_PORT%",
+        "ONLYOFFICE_HOST=nextcloud-aio-onlyoffice"
+      ],
+      "volumes": [
+        {
+          "name": "nextcloud_aio_nextcloud",
+          "location": "/var/www/html",
+          "writeable": false
+        },
+        {
+          "name": "nextcloud_aio_apache",
+          "location": "/mnt/data",
+          "writeable": true
+        }
+      ],
+      "maxShutdownTime": 10,
+      "restartPolicy": "unless-stopped"
+    },
+    {
+      "dependsOn": [],
+      "identifier": "nextcloud-aio-database",
+      "displayName": "Database",
+      "containerName": "nextcloud/aio-postgresql",
+      "ports": [],
+      "internalPorts": [
+        "5432"
+      ],
+      "secrets": [
+        "DATABASE_PASSWORD"
+      ],
+      "volumes": [
+        {
+          "name": "nextcloud_aio_database",
+          "location": "/var/lib/postgresql/data",
+          "writeable": true
+        },
+        {
+          "name": "nextcloud_aio_database_dump",
+          "location": "/mnt/data",
+          "writeable": true
+        }
+      ],
+      "environmentVariables": [
+        "POSTGRES_PASSWORD=%DATABASE_PASSWORD%",
+        "POSTGRES_DB=nextcloud_database",
+        "POSTGRES_USER=nextcloud"
+      ],
+      "maxShutdownTime": 1800,
+      "restartPolicy": "unless-stopped"
+    },
+    {
+      "dependsOn": [
+        "nextcloud-aio-database",
+        "nextcloud-aio-redis"
+      ],
+      "identifier": "nextcloud-aio-nextcloud",
+      "displayName": "Nextcloud",
+      "containerName": "nextcloud/aio-nextcloud",
+      "ports": [],
+      "internalPorts": [
+        "9000"
+      ],
+      "secrets": [
+        "DATABASE_PASSWORD",
+        "REDIS_PASSWORD",
+        "NEXTCLOUD_PASSWORD",
+        "TURN_SECRET",
+        "SIGNALING_SECRET"
+      ],
+      "volumes": [
+        {
+          "name": "nextcloud_aio_nextcloud",
+          "location": "/var/www/html",
+          "writeable": true
+        },
+        {
+          "name": "%NEXTCLOUD_DATADIR%",
+          "location": "/mnt/ncdata",
+          "writeable": true
+        },
+        {
+          "name": "%NEXTCLOUD_MOUNT%",
+          "location": "%NEXTCLOUD_MOUNT%",
+          "writeable": true
+        }
+      ],
+      "environmentVariables": [
+        "POSTGRES_HOST=nextcloud-aio-database",
+        "POSTGRES_PASSWORD=%DATABASE_PASSWORD%",
+        "POSTGRES_DB=nextcloud_database",
+        "POSTGRES_USER=nextcloud",
+        "REDIS_HOST=nextcloud-aio-redis",
+        "REDIS_HOST_PASSWORD=%REDIS_PASSWORD%",
+        "AIO_TOKEN=%AIO_TOKEN%",
+        "NC_DOMAIN=%NC_DOMAIN%",
+        "ADMIN_USER=admin",
+        "ADMIN_PASSWORD=%NEXTCLOUD_PASSWORD%",
+        "NEXTCLOUD_DATA_DIR=/mnt/ncdata",
+        "OVERWRITEHOST=%NC_DOMAIN%",
+        "OVERWRITEPROTOCOL=https",
+        "TURN_SECRET=%TURN_SECRET%",
+        "SIGNALING_SECRET=%SIGNALING_SECRET%",
+        "AIO_URL=%AIO_URL%",
+        "NEXTCLOUD_MOUNT=%NEXTCLOUD_MOUNT%",
+        "CLAMAV_ENABLED=%CLAMAV_ENABLED%",
+        "CLAMAV_HOST=nextcloud-aio-clamav",
+        "ONLYOFFICE_ENABLED=%ONLYOFFICE_ENABLED%",
+        "COLLABORA_ENABLED=%COLLABORA_ENABLED%",
+        "COLLABORA_HOST=nextcloud-aio-collabora",
+        "TALK_ENABLED=%TALK_ENABLED%",
+        "ONLYOFFICE_HOST=nextcloud-aio-onlyoffice",
+        "DAILY_BACKUP_RUNNING=%DAILY_BACKUP_RUNNING%"
+      ],
+      "maxShutdownTime": 10,
+      "restartPolicy": "unless-stopped"
+    },
+    {
+      "dependsOn": [],
+      "identifier": "nextcloud-aio-redis",
+      "displayName": "Redis",
+      "containerName": "nextcloud/aio-redis",
+      "ports": [],
+      "internalPorts": [
+        "6379"
+      ],
+      "environmentVariables": [
+        "REDIS_HOST_PASSWORD=%REDIS_PASSWORD%"
+      ],
+      "volumes": [],
+      "secrets": [
+        "REDIS_PASSWORD"
+      ],
+      "maxShutdownTime": 10,
+      "restartPolicy": "unless-stopped"
+    },
+    {
+      "dependsOn": [],
+      "identifier": "nextcloud-aio-collabora",
+      "displayName": "Collabora",
+      "containerName": "nextcloud/aio-collabora",
+      "ports": [],
+      "internalPorts": [
+        "9980"
+      ],
+      "environmentVariables": [
+        "domain=%NC_DOMAIN%",
+        "extra_params=--o:ssl.enable=false --o:ssl.termination=true --o:logging.level=warning"
+      ],
+      "volumes": [],
+      "secrets": [],
+      "maxShutdownTime": 10,
+      "restartPolicy": "unless-stopped"
+    },
+    {
+      "dependsOn": [],
+      "identifier": "nextcloud-aio-talk",
+      "displayName": "Talk",
+      "containerName": "nextcloud/aio-talk",
+      "ports": [
+        "3478/tcp",
+        "3478/udp"
+      ],
+      "internalPorts": [
+        "3478"
+      ],
+      "environmentVariables": [
+        "NC_DOMAIN=%NC_DOMAIN%",
+        "TURN_SECRET=%TURN_SECRET%",
+        "SIGNALING_SECRET=%SIGNALING_SECRET%",
+        "JANUS_API_KEY=%JANUS_API_KEY%"
+      ],
+      "volumes": [],
+      "secrets": [
+        "TURN_SECRET",
+        "SIGNALING_SECRET",
+        "JANUS_API_KEY"
+      ],
+      "maxShutdownTime": 10,
+      "restartPolicy": "unless-stopped"
+    },
+    {
+      "dependsOn": [],
+      "identifier": "nextcloud-aio-borgbackup",
+      "displayName": "Borgbackup",
+      "containerName": "nextcloud/aio-borgbackup",
+      "ports": [],
+      "internalPorts": [],
+      "environmentVariables": [
+        "BORG_PASSWORD=%BORGBACKUP_PASSWORD%",
+        "BORG_MODE=%BORGBACKUP_MODE%",
+        "SELECTED_RESTORE_TIME=%SELECTED_RESTORE_TIME%",
+        "BACKUP_RESTORE_PASSWORD=%BACKUP_RESTORE_PASSWORD%"
+      ],
+      "volumes": [
+        {
+          "name": "nextcloud_aio_backup_cache",
+          "location": "/root",
+          "writeable": true
+        },
+        {
+          "name": "nextcloud_aio_nextcloud",
+          "location": "/nextcloud_aio_volumes/nextcloud_aio_nextcloud",
+          "writeable": true
+        },
+        {
+          "name": "%NEXTCLOUD_DATADIR%",
+          "location": "/nextcloud_aio_volumes/nextcloud_aio_nextcloud_data",
+          "writeable": true
+        },
+        {
+          "name": "nextcloud_aio_database",
+          "location": "/nextcloud_aio_volumes/nextcloud_aio_database",
+          "writeable": true
+        },
+        {
+          "name": "nextcloud_aio_database_dump",
+          "location": "/nextcloud_aio_volumes/nextcloud_aio_database_dump",
+          "writeable": true
+        },
+        {
+          "name": "nextcloud_aio_apache",
+          "location": "/nextcloud_aio_volumes/nextcloud_aio_apache",
+          "writeable": true
+        },
+        {
+          "name": "nextcloud_aio_mastercontainer",
+          "location": "/nextcloud_aio_volumes/nextcloud_aio_mastercontainer",
+          "writeable": true
+        },
+        {
+          "name": "%BORGBACKUP_HOST_LOCATION%",
+          "location": "/mnt/borgbackup",
+          "writeable": true
+        }
+      ],
+      "secrets": [
+        "BORGBACKUP_PASSWORD"
+      ],
+      "maxShutdownTime": 10,
+      "restartPolicy": ""
+    },
+    {
+      "dependsOn": [],
+      "identifier": "nextcloud-aio-watchtower",
+      "displayName": "Watchtower",
+      "containerName": "nextcloud/aio-watchtower",
+      "ports": [],
+      "internalPorts": [],
+      "environmentVariables": [
+        "CONTAINER_TO_UPDATE=nextcloud-aio-mastercontainer"
+      ],
+      "volumes": [
+        {
+          "name": "/var/run/docker.sock",
+          "location": "/var/run/docker.sock",
+          "writeable": false
+        }
+      ],
+      "secrets": [],
+      "maxShutdownTime": 10,
+      "restartPolicy": ""
+    },
+    {
+      "dependsOn": [],
+      "identifier": "nextcloud-aio-domaincheck",
+      "displayName": "Domaincheck",
+      "containerName": "nextcloud/aio-domaincheck",
+      "ports": [
+        "%APACHE_PORT%/tcp"
+      ],
+      "internalPorts": [],
+      "environmentVariables": [
+        "INSTANCE_ID=%INSTANCE_ID%",
+        "APACHE_PORT=%APACHE_PORT%"
+      ],
+      "volumes": [],
+      "secrets": [
+        "INSTANCE_ID"
+      ],
+      "maxShutdownTime": 1,
+      "restartPolicy": ""
+    },
+    {
+      "dependsOn": [],
+      "identifier": "nextcloud-aio-clamav",
+      "displayName": "ClamAV",
+      "containerName": "nextcloud/aio-clamav",
+      "ports": [],
+      "internalPorts": [
+        "3310"
+      ],
+      "environmentVariables": [],
+      "volumes": [
+        {
+          "name": "nextcloud_aio_clamav",
+          "location": "/var/lib/clamav",
+          "writeable": true
+        }
+      ],
+      "secrets": [],
+      "maxShutdownTime": 10,
+      "restartPolicy": "unless-stopped"
+    },
+    {
+      "dependsOn": [],
+      "identifier": "nextcloud-aio-onlyoffice",
+      "displayName": "OnlyOffice",
+      "containerName": "nextcloud/aio-onlyoffice",
+      "ports": [],
+      "internalPorts": [
+        "80"
+      ],
+      "environmentVariables": [],
+      "volumes": [
+        {
+          "name": "nextcloud_aio_onlyoffice",
+          "location": "/var/lib/onlyoffice",
+          "writeable": true
+        }
+      ],
+      "secrets": [],
+      "maxShutdownTime": 10,
+      "restartPolicy": "unless-stopped"
+    }
+  ]
+}
